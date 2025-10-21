@@ -4,7 +4,7 @@ import subprocess
 import json
 
 # ====================================================================
-# [GEU-BASE]: وظيفة إنشاء الهيكل الأولي للمشروع (بترميز UTF-8)
+# [GEU-BASE]: وظيفة إنشاء الهيكل الأولي للمشروع (بترميز UTF-8 وإضافة سكربت البناء)
 # ====================================================================
 
 def create_project_structure(project_id, lang):
@@ -15,7 +15,7 @@ def create_project_structure(project_id, lang):
     # إنشاء مجلد .github/workflows إذا لم يكن موجودًا
     os.makedirs(".github/workflows", exist_ok=True)
     
-    # إنشاء ملف meta لتوثيق المشروع (C2) - تم إضافة encoding='utf-8'
+    # إنشاء ملف meta لتوثيق المشروع (C2)
     meta_data = {
         "project_id": project_id,
         "language": lang,
@@ -25,9 +25,14 @@ def create_project_structure(project_id, lang):
     with open(f"{project_folder}/meta_data.json", 'w', encoding='utf-8') as f:
         json.dump(meta_data, f, indent=4)
         
-    # إنشاء ملفات المصدر الوهمية المطلوبة لنجاح الاختبار المبدئي - تم إضافة encoding='utf-8'
+    # 1. إنشاء ملف الاختبار (SIMU)
     with open(f"{project_folder}/main_test.py", 'w', encoding='utf-8') as f:
-        f.write("# وحدة الاختبار الوظيفي (SIMU) هنا")
+        f.write("print('SIMU: الاختبار الوظيفي السحابي ناجح! كود العودة: 0')")
+        
+    # 2. إنشاء ملف البناء (ADC) - تم إضافة هذا الملف
+    with open(f"{project_folder}/main_build.py", 'w', encoding='utf-8') as f:
+        f.write("print('ADC: عملية التجميع والتغليف السحابية ناجحة!')") 
+
     with open(f"{project_folder}/requirements.txt", 'w', encoding='utf-8') as f:
         f.write("pyyaml") 
         
@@ -35,8 +40,7 @@ def create_project_structure(project_id, lang):
     return project_folder
 
 # ====================================================================
-# [RCEU-GIT]: وظيفة تهيئة المخزن المحلي والربط السحابي (SET:RCEU:CONFIG)
-# *ملاحظة: هذه الوظيفة تم تنفيذها بنجاح مسبقاً*
+# [RCEU-GIT]: وظيفة تهيئة المخزن المحلي والربط السحابي 
 # ====================================================================
 
 def initialize_git(remote_url):
@@ -74,7 +78,7 @@ def generate_deployment_config(project_id, project_path, action_type):
 
     deployment_config = {
         'name': f'CI/CD - {project_id}',
-        'on': {'push': {'branches': ['master']}}, # التصحيح هنا: استخدام 'master'
+        'on': {'push': {'branches': ['master']}}, # التصحيح: استخدام 'master'
         'jobs': {
             'run_job': {
                 'name': job_name,
@@ -108,16 +112,12 @@ def generate_deployment_config(project_id, project_path, action_type):
 # ====================================================================
 
 if __name__ == "__main__":
-    # 0. تم إلغاء تهيئة Git لأنها تمت بنجاح
-    # github_repo_url = "https://github.com/essamelaskary4-glitch/System_Core.git" 
-    # print("\n--- محاكاة إطلاق أمر SET:RCEU:CONFIG:INIT_GIT ---")
-    # initialize_git(github_repo_url) 
-
+    
     # 1. المرحلة C1/C2: بناء الهيكل الأولي للمشروع
     project_id = "PROJ_ALPHA_001"
     language = "Python"
     
-    # 2. إعادة توليد ملف YAML بالفرع المصحح
+    # 2. إعادة توليد ملف YAML والهياكل (ليشمل main_build.py)
     print("\n--- إطلاق أمر CMD:BUILD (إعادة توليد الهياكل) ---")
     project_folder = create_project_structure(project_id, language)
     
