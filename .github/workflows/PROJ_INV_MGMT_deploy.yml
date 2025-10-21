@@ -1,0 +1,20 @@
+name: CI/CD - PROJ_INV_MGMT
+'on':
+  push:
+    branches:
+    - master
+jobs:
+  run_job:
+    name: Docker_Build_And_Push
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - name: Install Dependencies
+      run: pip install -r projects/PROJ_INV_MGMT/requirements.txt
+    - name: Docker_Build_And_Push
+      run: docker build -t PROJ_INV_MGMT:latest -f projects/PROJ_INV_MGMT/Dockerfile
+        .

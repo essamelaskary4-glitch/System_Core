@@ -4,7 +4,7 @@ import subprocess
 import json
 
 # ====================================================================
-# [GEU-BASE]: وظيفة إنشاء الهيكل الأولي للمشروع
+# [GEU-BASE]: وظيفة إنشاء الهيكل الأولي للمشروع (المُحدثة لمشروع API)
 # ====================================================================
 
 def create_project_structure(project_id, lang):
@@ -14,30 +14,71 @@ def create_project_structure(project_id, lang):
     
     os.makedirs(".github/workflows", exist_ok=True)
     
+    # 1. تحديث ملف التوثيق (C2)
     meta_data = {
         "project_id": project_id,
         "language": lang,
-        "status": "C2_PLANNING",
+        "type": "API_BACKEND", # تحديث نوع المشروع
+        "status": "C1_INITIATED",
         "deployment_path": f".github/workflows/{project_id}_deploy.yml"
     }
     with open(f"{project_folder}/meta_data.json", 'w', encoding='utf-8') as f:
         json.dump(meta_data, f, indent=4)
         
-    with open(f"{project_folder}/main_test.py", 'w', encoding='utf-8') as f:
-        f.write("print('SIMU: الاختبار الوظيفي السحابي ناجح! كود العودة: 0')")
-        
-    with open(f"{project_folder}/main_build.py", 'w', encoding='utf-8') as f:
-        f.write("print('ADC: عملية التجميع والتغليف السحابية ناجحة!')") 
+    # 2. إنشاء ملف main.py (سكربت تشغيل API الفعلي)
+    api_content = f"""
+from fastapi import FastAPI
 
-    with open(f"{project_folder}/requirements.txt", 'w', encoding='utf-8') as f:
-        f.write("pyyaml") 
+# [GEU-CORE]: تم توليد هذا السكربت بواسطة نظام System_Core
+app = FastAPI(title="Inventory Management API - {project_id}")
+
+@app.get("/")
+def read_root():
+    return {{"Hello": "World", "Service": "Inventory Management API is running!"}}
+
+@app.get("/items/{{item_id}}")
+def read_item(item_id: int):
+    # محاكاة لاسترجاع عنصر في المخزون
+    return {{"item_id": item_id, "name": f"Item {{item_id}}", "quantity": 100}}
+"""
+    with open(f"{project_folder}/main.py", 'w', encoding='utf-8') as f:
+        f.write(api_content.strip())
         
-    print(f"✅ تم إنشاء هيكل المشروع {project_id} بلغة {lang} بنجاح.")
+    # 3. إنشاء ملف Dockerfile (لتغليف المشروع)
+    docker_content = f"""
+# Use official Python image as a base
+FROM python:3.10-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the requirements file and install dependencies
+COPY {project_folder}/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY {project_folder}/main.py .
+
+# Expose the port (FastAPI default)
+EXPOSE 8000
+
+# Command to run the application using Uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+"""
+    with open(f"{project_folder}/Dockerfile", 'w', encoding='utf-8') as f:
+        f.write(docker_content.strip())
+
+    # 4. تحديث ملف التبعيات (requirements.txt)
+    with open(f"{project_folder}/requirements.txt", 'w', encoding='utf-8') as f:
+        f.write("fastapi\n") 
+        f.write("uvicorn\n")
+        f.write("pyyaml\n") # للاحتفاظ بتبعية النظام
+
+    print(f"✅ تم إنشاء هيكل مشروع الـ API {project_id} بلغة {lang} بنجاح.")
     return project_folder
 
 # ====================================================================
 # [RCEU-GIT]: وظيفة تهيئة المخزن المحلي والربط السحابي 
-# (تم الإبقاء عليها كما هي)
 # ====================================================================
 
 def initialize_git(remote_url):
@@ -57,19 +98,23 @@ def initialize_git(remote_url):
 
 # ====================================================================
 # [RCEU-CORE]: وظيفة توليد ملف النشر السحابي (deployment_config.yml)
-# *تم تصحيح مسار ملف التبعيات*
+# *تم تحديث المسارات لتعمل مع main.py الجديد*
 # ====================================================================
 
 def generate_deployment_config(project_id, project_path, action_type):
-    """
-    تُنشئ ملف YAML لخطة النشر السحابية (GitHub Actions).
-    """
+    """تُنشئ ملف YAML لخطة النشر السحابية (GitHub Actions)."""
+    
+    # 1. تحديد الأوامر التشغيلية الجديدة
     if action_type == "SIM_TEST":
-        job_name = "Run_Functional_Tests"
-        script_command = f"python {project_path}/main_test.py"
+        job_name = "API_Local_Run_Test"
+        # أمر التشغيل المحلي لـ FastAPI
+        script_command = f"uvicorn {project_path}/main:app --host 127.0.0.1 --port 8000 &" # & للتشغيل في الخلفية
+        
     elif action_type == "DEL_PACKAGE":
-        job_name = "Build_And_Package_Artifact"
-        script_command = f"python {project_path}/main_build.py"
+        job_name = "Docker_Build_And_Push"
+        # أمر بناء حاوية Docker (يتطلب إعداد Docker في GitHub Actions)
+        script_command = f"docker build -t {project_id}:latest -f {project_path}/Dockerfile ."
+        
     else:
         raise ValueError(f"❌ خطأ يقيني: نوع الإجراء {action_type} غير مدعوم.")
 
@@ -87,10 +132,12 @@ def generate_deployment_config(project_id, project_path, action_type):
                     {'uses': 'actions/checkout@v3'},
                     {'name': 'Setup Python',
                      'uses': 'actions/setup-python@v3',
-                     'with': {'python-version': '3.x'}},
+                     'with': {'python-version': '3.10'}},
                     {'name': 'Install Dependencies',
-                     'run': f"pip install -r {requirements_path}"}, # هنا التعديل الحاسم
-                    {'name': 'Run Script',
+                     'run': f"pip install -r {requirements_path}"},
+                    
+                    # يتم استخدام الأمر المخصص لكل نوع إجراء
+                    {'name': job_name,
                      'run': script_command},
                 ]
             }
@@ -108,15 +155,15 @@ def generate_deployment_config(project_id, project_path, action_type):
     return yaml_filename
 
 # ====================================================================
-# وظيفة محاكاة إطلاق أمر DSL
+# وظيفة محاكاة إطلاق أمر DSL (المحدثة لأمر INV_MGMT)
 # ====================================================================
 
 if __name__ == "__main__":
     
-    project_id = "PROJ_ALPHA_001"
+    project_id = "PROJ_INV_MGMT" # اسم المشروع الجديد
     language = "Python"
     
-    print("\n--- إطلاق أمر CMD:BUILD (إعادة توليد الهياكل و YAML) ---")
+    print("\n--- إطلاق أمر CMD:BUILD:API:INV_MGMT ---")
     project_folder = create_project_structure(project_id, language)
     
     print("\n--- محاكاة إطلاق أمر SIM ---")

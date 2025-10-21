@@ -1,0 +1,7 @@
+{
+    "project_id": "PROJ_INV_MGMT",
+    "language": "Python",
+    "type": "API_BACKEND",
+    "status": "C1_INITIATED",
+    "deployment_path": ".github/workflows/PROJ_INV_MGMT_deploy.yml"
+}
