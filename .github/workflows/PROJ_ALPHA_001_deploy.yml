@@ -2,7 +2,7 @@ name: CI/CD - PROJ_ALPHA_001
 'on':
   push:
     branches:
-    - main
+    - master
 jobs:
   run_job:
     name: Build_And_Package_Artifact

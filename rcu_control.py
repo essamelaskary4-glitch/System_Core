@@ -4,7 +4,7 @@ import subprocess
 import json
 
 # ====================================================================
-# [GEU-BASE]: وظيفة إنشاء الهيكل الأولي للمشروع
+# [GEU-BASE]: وظيفة إنشاء الهيكل الأولي للمشروع (بترميز UTF-8)
 # ====================================================================
 
 def create_project_structure(project_id, lang):
@@ -15,64 +15,54 @@ def create_project_structure(project_id, lang):
     # إنشاء مجلد .github/workflows إذا لم يكن موجودًا
     os.makedirs(".github/workflows", exist_ok=True)
     
-    # إنشاء ملف meta لتوثيق المشروع (C2)
+    # إنشاء ملف meta لتوثيق المشروع (C2) - تم إضافة encoding='utf-8'
     meta_data = {
         "project_id": project_id,
         "language": lang,
         "status": "C2_PLANNING",
         "deployment_path": f".github/workflows/{project_id}_deploy.yml"
     }
-    with open(f"{project_folder}/meta_data.json", 'w') as f:
+    with open(f"{project_folder}/meta_data.json", 'w', encoding='utf-8') as f:
         json.dump(meta_data, f, indent=4)
         
-    # إنشاء ملفات المصدر الوهمية المطلوبة لنجاح الاختبار المبدئي
-    with open(f"{project_folder}/main_test.py", 'w') as f:
+    # إنشاء ملفات المصدر الوهمية المطلوبة لنجاح الاختبار المبدئي - تم إضافة encoding='utf-8'
+    with open(f"{project_folder}/main_test.py", 'w', encoding='utf-8') as f:
         f.write("# وحدة الاختبار الوظيفي (SIMU) هنا")
-    with open(f"{project_folder}/requirements.txt", 'w') as f:
-        f.write("pyyaml") # إضافة تبعية YAML كتجربة
+    with open(f"{project_folder}/requirements.txt", 'w', encoding='utf-8') as f:
+        f.write("pyyaml") 
         
     print(f"✅ تم إنشاء هيكل المشروع {project_id} بلغة {lang} بنجاح.")
     return project_folder
 
 # ====================================================================
 # [RCEU-GIT]: وظيفة تهيئة المخزن المحلي والربط السحابي (SET:RCEU:CONFIG)
+# *ملاحظة: هذه الوظيفة تم تنفيذها بنجاح مسبقاً*
 # ====================================================================
 
 def initialize_git(remote_url):
-    """
-    تقوم بتهيئة Git محليًا، وتضيف ملفات النظام، وتربطها بمخزن عن بعد.
-    يتم تشغيل هذه الوظيفة لمرة واحدة فقط.
-    """
+    """تقوم بتهيئة Git محليًا، وتضيف ملفات النظام، وتربطها بمخزن عن بعد."""
     try:
-        # 1. تهيئة Git محليًا في المجلد الأب (System_Core)
         subprocess.run(["git", "init"], check=True)
         print("✅ Git تم تهيئته بنجاح محليًا.")
-
-        # 2. إضافة مسار المخزن السحابي (Remote)
-        # يتم استخدام --force في حالة وجود مخزن آخر مربوط مسبقًا
         subprocess.run(["git", "remote", "add", "origin", remote_url], check=True, capture_output=True, text=True)
         print(f"✅ تم ربط المخزن السحابي: {remote_url}")
-
-        # 3. إضافة جميع ملفات النظام الأولية
         subprocess.run(["git", "add", "."], check=True)
         subprocess.run(["git", "commit", "-m", "GIT_INIT: Base System Core (RCEU/GEU) setup"], check=True)
         print("✅ تم إضافة وتثبيت الملفات الأساسية.")
 
     except subprocess.CalledProcessError as e:
-        # تسجيل عجز تأكيدي في حال فشل عملية Git
-        print(f"❌ عجز تأكيدي (AD): فشل في تهيئة Git. تحقق من تثبيت Git بشكل صحيح أو عدم وجود مخزن مرتبط مسبقًا.")
-        print(f"تفاصيل الخطأ: {e.stderr}")
+        print(f"❌ عجز تأكيدي (AD): فشل في تهيئة Git. تفاصيل الخطأ: {e.stderr}")
         raise e
 
 # ====================================================================
 # [RCEU-CORE]: وظيفة توليد ملف النشر السحابي (deployment_config.yml)
+# *تم تصحيح اسم الفرع إلى 'master' بدلاً من 'main'*
 # ====================================================================
 
 def generate_deployment_config(project_id, project_path, action_type):
     """
     تُنشئ ملف YAML لخطة النشر السحابية (GitHub Actions).
     """
-    # .................... [الكود الذي تم كتابته مسبقاً يوضع هنا] ....................
     if action_type == "SIM_TEST":
         job_name = "Run_Functional_Tests"
         script_command = f"python {project_path}/main_test.py"
@@ -84,7 +74,7 @@ def generate_deployment_config(project_id, project_path, action_type):
 
     deployment_config = {
         'name': f'CI/CD - {project_id}',
-        'on': {'push': {'branches': ['main']}}, 
+        'on': {'push': {'branches': ['master']}}, # التصحيح هنا: استخدام 'master'
         'jobs': {
             'run_job': {
                 'name': job_name,
@@ -107,7 +97,7 @@ def generate_deployment_config(project_id, project_path, action_type):
     os.makedirs(config_folder, exist_ok=True)
     yaml_filename = f"{config_folder}/{project_id}_deploy.yml"
 
-    with open(yaml_filename, 'w') as f:
+    with open(yaml_filename, 'w', encoding='utf-8') as f:
         yaml.dump(deployment_config, f, sort_keys=False)
         
     print(f"✅ تم إنشاء ملف YAML لخطة النشر {yaml_filename} بنجاح.")
@@ -118,22 +108,21 @@ def generate_deployment_config(project_id, project_path, action_type):
 # ====================================================================
 
 if __name__ == "__main__":
-    # 0. تهيئة مسار Git الأولي (يجب تشغيله مرة واحدة)
-    # ملاحظة: تم إزالة التعليق عن هذه الوظيفة
-    github_repo_url = "https://github.com/essamelaskary4-glitch/System_Core.git" 
-    
-    print("\n--- محاكاة إطلاق أمر SET:RCEU:CONFIG:INIT_GIT ---")
-    initialize_git(github_repo_url) 
+    # 0. تم إلغاء تهيئة Git لأنها تمت بنجاح
+    # github_repo_url = "https://github.com/essamelaskary4-glitch/System_Core.git" 
+    # print("\n--- محاكاة إطلاق أمر SET:RCEU:CONFIG:INIT_GIT ---")
+    # initialize_git(github_repo_url) 
 
     # 1. المرحلة C1/C2: بناء الهيكل الأولي للمشروع
     project_id = "PROJ_ALPHA_001"
     language = "Python"
+    
+    # 2. إعادة توليد ملف YAML بالفرع المصحح
+    print("\n--- إطلاق أمر CMD:BUILD (إعادة توليد الهياكل) ---")
     project_folder = create_project_structure(project_id, language)
     
-    # 2. محاكاة إنشاء ملف YAML للاختبار
     print("\n--- محاكاة إطلاق أمر SIM ---")
     generate_deployment_config(project_id, project_folder, "SIM_TEST")
     
-    # 3. محاكاة إنشاء ملف YAML للتجميع النهائي
     print("\n--- محاكاة إطلاق أمر DEL ---")
     generate_deployment_config(project_id, project_folder, "DEL_PACKAGE")
