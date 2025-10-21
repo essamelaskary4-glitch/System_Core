@@ -14,6 +14,6 @@ jobs:
       with:
         python-version: 3.x
     - name: Install Dependencies
-      run: pip install -r requirements.txt
+      run: pip install -r projects/PROJ_ALPHA_001/requirements.txt
     - name: Run Script
       run: python projects/PROJ_ALPHA_001/main_build.py

@@ -4,7 +4,7 @@ import subprocess
 import json
 
 # ====================================================================
-# [GEU-BASE]: وظيفة إنشاء الهيكل الأولي للمشروع (بترميز UTF-8 وإضافة سكربت البناء)
+# [GEU-BASE]: وظيفة إنشاء الهيكل الأولي للمشروع
 # ====================================================================
 
 def create_project_structure(project_id, lang):
@@ -12,10 +12,8 @@ def create_project_structure(project_id, lang):
     project_folder = f"projects/{project_id}"
     os.makedirs(project_folder, exist_ok=True)
     
-    # إنشاء مجلد .github/workflows إذا لم يكن موجودًا
     os.makedirs(".github/workflows", exist_ok=True)
     
-    # إنشاء ملف meta لتوثيق المشروع (C2)
     meta_data = {
         "project_id": project_id,
         "language": lang,
@@ -25,11 +23,9 @@ def create_project_structure(project_id, lang):
     with open(f"{project_folder}/meta_data.json", 'w', encoding='utf-8') as f:
         json.dump(meta_data, f, indent=4)
         
-    # 1. إنشاء ملف الاختبار (SIMU)
     with open(f"{project_folder}/main_test.py", 'w', encoding='utf-8') as f:
         f.write("print('SIMU: الاختبار الوظيفي السحابي ناجح! كود العودة: 0')")
         
-    # 2. إنشاء ملف البناء (ADC) - تم إضافة هذا الملف
     with open(f"{project_folder}/main_build.py", 'w', encoding='utf-8') as f:
         f.write("print('ADC: عملية التجميع والتغليف السحابية ناجحة!')") 
 
@@ -41,6 +37,7 @@ def create_project_structure(project_id, lang):
 
 # ====================================================================
 # [RCEU-GIT]: وظيفة تهيئة المخزن المحلي والربط السحابي 
+# (تم الإبقاء عليها كما هي)
 # ====================================================================
 
 def initialize_git(remote_url):
@@ -60,7 +57,7 @@ def initialize_git(remote_url):
 
 # ====================================================================
 # [RCEU-CORE]: وظيفة توليد ملف النشر السحابي (deployment_config.yml)
-# *تم تصحيح اسم الفرع إلى 'master' بدلاً من 'main'*
+# *تم تصحيح مسار ملف التبعيات*
 # ====================================================================
 
 def generate_deployment_config(project_id, project_path, action_type):
@@ -76,9 +73,12 @@ def generate_deployment_config(project_id, project_path, action_type):
     else:
         raise ValueError(f"❌ خطأ يقيني: نوع الإجراء {action_type} غير مدعوم.")
 
+    # المسار المصحح لملف requirements.txt
+    requirements_path = f"{project_path}/requirements.txt" 
+
     deployment_config = {
         'name': f'CI/CD - {project_id}',
-        'on': {'push': {'branches': ['master']}}, # التصحيح: استخدام 'master'
+        'on': {'push': {'branches': ['master']}}, 
         'jobs': {
             'run_job': {
                 'name': job_name,
@@ -89,7 +89,7 @@ def generate_deployment_config(project_id, project_path, action_type):
                      'uses': 'actions/setup-python@v3',
                      'with': {'python-version': '3.x'}},
                     {'name': 'Install Dependencies',
-                     'run': 'pip install -r requirements.txt'},
+                     'run': f"pip install -r {requirements_path}"}, # هنا التعديل الحاسم
                     {'name': 'Run Script',
                      'run': script_command},
                 ]
@@ -113,12 +113,10 @@ def generate_deployment_config(project_id, project_path, action_type):
 
 if __name__ == "__main__":
     
-    # 1. المرحلة C1/C2: بناء الهيكل الأولي للمشروع
     project_id = "PROJ_ALPHA_001"
     language = "Python"
     
-    # 2. إعادة توليد ملف YAML والهياكل (ليشمل main_build.py)
-    print("\n--- إطلاق أمر CMD:BUILD (إعادة توليد الهياكل) ---")
+    print("\n--- إطلاق أمر CMD:BUILD (إعادة توليد الهياكل و YAML) ---")
     project_folder = create_project_structure(project_id, language)
     
     print("\n--- محاكاة إطلاق أمر SIM ---")
