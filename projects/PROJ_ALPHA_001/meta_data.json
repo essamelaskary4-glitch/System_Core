@@ -1,0 +1,6 @@
+{
+    "project_id": "PROJ_ALPHA_001",
+    "language": "Python",
+    "status": "C2_PLANNING",
+    "deployment_path": ".github/workflows/PROJ_ALPHA_001_deploy.yml"
+}

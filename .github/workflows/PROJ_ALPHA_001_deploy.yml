@@ -1,0 +1,19 @@
+name: CI/CD - PROJ_ALPHA_001
+'on':
+  push:
+    branches:
+    - main
+jobs:
+  run_job:
+    name: Build_And_Package_Artifact
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.x
+    - name: Install Dependencies
+      run: pip install -r requirements.txt
+    - name: Run Script
+      run: python projects/PROJ_ALPHA_001/main_build.py
